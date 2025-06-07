@@ -21,3 +21,12 @@ export default function RootLayout() {
     </>
   );
 }
+
+/* 
+1. 安装 image 库
+  npx expo install expo-image
+
+2. 安装 image picker 库
+  npx expo install expo-image-picker
+
+*/
