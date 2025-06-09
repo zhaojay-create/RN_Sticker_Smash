@@ -1,3 +1,10 @@
+import domtoimage from "dom-to-image";
+import * as ImagePicker from "expo-image-picker";
+import * as MediaLibrary from "expo-media-library";
+import { useEffect, useRef, useState } from "react";
+import { ImageSourcePropType, Platform, StyleSheet, View } from "react-native";
+import { captureRef } from "react-native-view-shot";
+
 import Button from "@/components/Button";
 import CircleButton from "@/components/CircleButton";
 import EmojiList from "@/components/EmojiList";
@@ -5,9 +12,6 @@ import EmojiPickerModal from "@/components/EmojiPickerModal";
 import EmojiSticker from "@/components/EmojiSticker";
 import IconButton from "@/components/IconButton";
 import ImageViewer from "@/components/ImageViewer";
-import * as ImagePicker from "expo-image-picker";
-import { useState } from "react";
-import { ImageSourcePropType, StyleSheet, View } from "react-native";
 
 const placeholderImage = require("../../assets/images/background-image.png"); // RN 推荐使用 require 导入图片
 
@@ -19,6 +23,15 @@ export default function Index() {
 
   const [showAppOptions, setShowAppOptions] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+
+  const [status, requestPermission] = MediaLibrary.usePermissions(); // 获取媒体库权限
+  const imageRef = useRef<View>(null);
+
+  useEffect(() => {
+    if (!status?.granted) {
+      requestPermission();
+    }
+  }, [status, requestPermission]);
 
   // 上传图片
   const handlePickImage = async () => {
@@ -52,8 +65,34 @@ export default function Index() {
 
   // 保存图片
   const onSaveImageAsync = async () => {
-    // 这里可以添加保存图片的逻辑
-    alert("Save image functionality is not implemented yet.");
+    try {
+      if (Platform.OS === "web") {
+        // @ts-ignore
+        const dataUrl = await domtoimage.toJpeg(imageRef.current, {
+          quality: 0.95,
+          width: 320,
+          height: 440,
+        });
+
+        let link = document.createElement("a");
+        link.download = "sticker-smash.jpeg";
+        link.href = dataUrl;
+        link.click();
+      } else {
+        // captureRef 用于捕获指定组件的视图，并将其保存为图片
+        const localUri = await captureRef(imageRef, {
+          height: 440,
+          quality: 1,
+        });
+        // 保存到媒体库
+        await MediaLibrary.saveToLibraryAsync(localUri);
+        if (localUri) {
+          alert("Saved!");
+        }
+      }
+    } catch (e) {
+      console.log(e);
+    }
   };
 
   // 关闭, 选择贴纸的模态框
@@ -64,13 +103,16 @@ export default function Index() {
   return (
     <View style={styles.container}>
       <View style={styles.imageContainer}>
-        <ImageViewer
-          imgSource={placeholderImage}
-          selectedImage={selectedImage}
-        />
-        {pickedEmoji && (
-          <EmojiSticker imageSize={40} stickerSource={pickedEmoji} />
-        )}
+        <View ref={imageRef} collapsable={false}>
+          {/* 当 collapsable={false} 时，即使这个 <View> 没有样式或事件，也会强制保留在原生视图树中。 */}
+          <ImageViewer
+            imgSource={placeholderImage}
+            selectedImage={selectedImage}
+          />
+          {pickedEmoji && (
+            <EmojiSticker imageSize={40} stickerSource={pickedEmoji} />
+          )}
+        </View>
       </View>
 
       {showAppOptions ? (

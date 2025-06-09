@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import { StatusBar } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export default function RootLayout() {
@@ -8,7 +8,7 @@ export default function RootLayout() {
     // 它需要包裹在最外层，以便处理手势事件
     <GestureHandlerRootView>
       {/* 就是手机上方，电池和 wifi bar */}
-      <StatusBar barStyle={"light-content"} />
+      <StatusBar style="light" />
       <Stack>
         <Stack.Screen
           name="(tabs)"
@@ -35,4 +35,6 @@ export default function RootLayout() {
 3. 安装 view shot 保存图片
   npx expo install react-native-view-shot expo-media-library
 
+4. 安装库 来让 web 可以保存图片
+  npm install dom-to-image
 */
